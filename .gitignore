@@ -1,0 +1,12 @@
+# Ignore everything in wp-content except our custom theme
+wp-content/*
+!wp-content/themes/
+wp-content/themes/*
+!wp-content/themes/kumiai-theme/
+
+# macOS / Windows system files
+.DS_Store
+Thumbs.db
+
+# Any local environment files if existed
+.env
