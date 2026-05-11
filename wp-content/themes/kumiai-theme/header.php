@@ -13,7 +13,21 @@
 		<div class="container header-container">
 			<div class="site-logo">
 				<a href="<?php echo esc_url( get_theme_mod( 'kumiai_logo_link', home_url( '/' ) ) ); ?>">
-					<i class="fa-solid fa-clock"></i> 監理ワン
+					<?php if ( has_custom_logo() ) : ?>
+						<?php
+						$kumiai_logo_id  = get_theme_mod( 'custom_logo' );
+						$kumiai_logo_src = wp_get_attachment_image_src( $kumiai_logo_id, 'full' );
+						if ( $kumiai_logo_src ) {
+							printf(
+								'<img src="%1$s" alt="%2$s" class="custom-logo">',
+								esc_url( $kumiai_logo_src[0] ),
+								esc_attr( get_bloginfo( 'name' ) )
+							);
+						}
+						?>
+					<?php else : ?>
+						<i class="fa-solid fa-clock"></i> 監理ワン
+					<?php endif; ?>
 				</a>
 			</div>
 			
