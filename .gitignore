@@ -1,8 +1,11 @@
-# Ignore everything in wp-content except our custom theme
+# Ignore everything in wp-content except our custom theme + the uploads dir placeholder
 wp-content/*
 !wp-content/themes/
+!wp-content/uploads/
 wp-content/themes/*
+wp-content/uploads/*
 !wp-content/themes/kumiai-theme/
+!wp-content/uploads/.gitkeep
 
 # macOS / Windows system files
 .DS_Store
@@ -10,3 +13,6 @@ Thumbs.db
 
 # Any local environment files if existed
 .env
+
+# Composer (dev stubs only — not loaded at runtime)
+/vendor/

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# WP-CLI wrapper for the running kumiai_wp container.
+# Usage: ./wp <wp-cli args>
+#   ./wp user list
+#   ./wp post list --post_type=post --format=table
+#   ./wp option get siteurl
+#   ./wp search-replace 'http://old' 'https://new' --dry-run
+set -euo pipefail
+
+if [[ "$(docker ps --filter 'name=^kumiai_wp$' --format '{{.Names}}')" != "kumiai_wp" ]]; then
+    echo "Container 'kumiai_wp' is not running. Start it first with: docker compose up -d" >&2
+    exit 1
+fi
+
+network="$(docker inspect kumiai_wp --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')"
+
+# Inherit DB credentials from the running container.
+env_line() { docker inspect kumiai_wp --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^$1=" | head -n1 | cut -d= -f2-; }
+db_user="$(env_line WORDPRESS_DB_USER)"
+db_pass="$(env_line WORDPRESS_DB_PASSWORD)"
+db_name="$(env_line WORDPRESS_DB_NAME)"
+
+exec docker run --rm \
+    --network "$network" \
+    --volumes-from kumiai_wp \
+    --user 33:33 \
+    -e WORDPRESS_DB_HOST=db:3306 \
+    -e "WORDPRESS_DB_USER=$db_user" \
+    -e "WORDPRESS_DB_PASSWORD=$db_pass" \
+    -e "WORDPRESS_DB_NAME=$db_name" \
+    wordpress:cli "$@"

@@ -1,0 +1,52 @@
+{
+  "intelephense.environment.includePaths": [
+    "vendor/php-stubs/wordpress-stubs"
+  ],
+  "intelephense.stubs": [
+    "apache",
+    "bcmath",
+    "Core",
+    "ctype",
+    "curl",
+    "date",
+    "dom",
+    "fileinfo",
+    "filter",
+    "gd",
+    "hash",
+    "iconv",
+    "imap",
+    "json",
+    "libxml",
+    "mbstring",
+    "mysqli",
+    "openssl",
+    "pcre",
+    "PDO",
+    "pdo_mysql",
+    "Phar",
+    "readline",
+    "Reflection",
+    "session",
+    "SimpleXML",
+    "sodium",
+    "SPL",
+    "standard",
+    "tokenizer",
+    "xml",
+    "xmlreader",
+    "xmlwriter",
+    "zip",
+    "zlib"
+  ],
+  "intelephense.diagnostics.undefinedFunctions": true,
+  "intelephense.diagnostics.undefinedConstants": true,
+  "intelephense.diagnostics.undefinedClassConstants": true,
+  "intelephense.diagnostics.undefinedMethods": true,
+  "intelephense.files.exclude": [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/vendor/**/{Tests,tests}/**"
+  ],
+  "intelephense.files.maxSize": 6000000
+}

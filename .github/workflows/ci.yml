@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHP checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: PHP syntax (parallel-lint)
+        run: composer run-script lint
+
+      - name: WordPress Coding Standards (PHPCS)
+        run: composer run-script phpcs -- --no-cache
+
+      - name: Static analysis (PHPStan)
+        run: composer run-script phpstan -- --no-progress
+
+  compose:
+    name: docker-compose validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        run: docker compose config --quiet
+        env:
+          # Dummy values so the substitutions don't fail; production uses real .env.
+          DB_ROOT_PASSWORD: ci
+          DB_PASSWORD: ci
+          DB_USER: ci
+          DB_NAME: ci
+          WP_HOME: http://localhost:8000
+          WP_SITEURL: http://localhost:8000
+          WP_PORT: '8000'
+          KUMIAI_ENV: development

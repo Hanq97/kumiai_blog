@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
@@ -12,22 +10,47 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD:-wp_password}
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   wordpress:
     depends_on:
-      - db
-    image: wordpress:latest
+      db:
+        condition: service_healthy
+    image: wordpress:6.7-php8.3-apache
     container_name: kumiai_wp
     restart: always
     ports:
-      - "8000:80"
+      - "${WP_PORT:-8000}:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: ${DB_USER:-wp_user}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wp_password}
       WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', '${WP_HOME:-http://localhost:8000}');
+        define('WP_SITEURL', '${WP_SITEURL:-http://localhost:8000}');
+        define('KUMIAI_ENV', '${KUMIAI_ENV:-development}');
+        define('DISALLOW_FILE_EDIT', true);
+        define('AUTOMATIC_UPDATER_DISABLED', true);
+        if (KUMIAI_ENV === 'production') {
+            define('WP_DEBUG', false);
+            define('FORCE_SSL_ADMIN', true);
+        } else {
+            define('WP_DEBUG', true);
+            define('WP_DEBUG_LOG', true);
+            define('WP_DEBUG_DISPLAY', false);
+            @ini_set('display_errors', 0);
+        }
     volumes:
       - ./wp-content/themes/kumiai-theme:/var/www/html/wp-content/themes/kumiai-theme
+      - ./wp-content/uploads:/var/www/html/wp-content/uploads
+      - wp_plugins:/var/www/html/wp-content/plugins
 
 volumes:
   db_data:
+  wp_plugins:
