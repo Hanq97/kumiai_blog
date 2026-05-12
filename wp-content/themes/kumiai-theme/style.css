@@ -73,7 +73,13 @@ ul { list-style: none; padding: 0; margin: 0; }
   width: auto;
   display: block;
   margin-bottom: 15px;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(1); /* fallback: tint header logo white when no dedicated footer logo */
+}
+.footer-brand .footer-logo-image {
+  height: 44px;
+  width: auto;
+  display: block;
+  margin-bottom: 15px;
 }
 .header-menu-list {
   display: flex;
@@ -297,13 +303,13 @@ ul { list-style: none; padding: 0; margin: 0; }
 .site-footer {
   background: #111827; /* Darker navy */
   color: #e5e7eb;
-  padding: 60px 0 20px;
+  padding: 36px 0 16px;
 }
 .footer-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 50px;
-  margin-bottom: 50px;
+  margin-bottom: 28px;
 }
 .footer-brand .site-logo {
   font-size: 1.5rem;
@@ -343,7 +349,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 }
 .footer-bottom {
   border-top: 1px solid #374151;
-  padding-top: 20px;
+  padding-top: 14px;
   text-align: center;
   color: #6b7280;
   font-size: 0.9rem;

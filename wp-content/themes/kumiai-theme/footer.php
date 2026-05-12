@@ -2,8 +2,18 @@
 		<div class="container footer-grid">
 			<div class="footer-brand">
 				<div class="site-logo">
-					<?php if ( has_custom_logo() ) : ?>
-						<?php
+					<?php
+					$kumiai_footer_logo_id = (int) get_theme_mod( 'kumiai_footer_logo' );
+					if ( $kumiai_footer_logo_id ) {
+						$kumiai_footer_logo_src = wp_get_attachment_image_src( $kumiai_footer_logo_id, 'full' );
+						if ( $kumiai_footer_logo_src ) {
+							printf(
+								'<img src="%1$s" alt="%2$s" class="footer-logo-image">',
+								esc_url( $kumiai_footer_logo_src[0] ),
+								esc_attr( get_bloginfo( 'name' ) )
+							);
+						}
+					} elseif ( has_custom_logo() ) {
 						$kumiai_logo_id  = get_theme_mod( 'custom_logo' );
 						$kumiai_logo_src = wp_get_attachment_image_src( $kumiai_logo_id, 'full' );
 						if ( $kumiai_logo_src ) {
@@ -13,10 +23,10 @@
 								esc_attr( get_bloginfo( 'name' ) )
 							);
 						}
-						?>
-					<?php else : ?>
-						<i class="fa-solid fa-clock"></i> 監理ワン
-					<?php endif; ?>
+					} else {
+						echo '<i class="fa-solid fa-clock"></i> 監理ワン';
+					}
+					?>
 				</div>
 				<p>監理団体・登録支援機関の業務を徹底的に効率化。2027年育成就労制度にも自動対応する、次世代の管理システム。</p>
 			</div>
