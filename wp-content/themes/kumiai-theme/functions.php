@@ -171,6 +171,27 @@ function kumiai_customize_register( WP_Customize_Manager $wp_customize ) {
 			'type'    => 'url',
 		)
 	);
+
+	// Dedicated footer logo (the dark-background-friendly variant).
+	$wp_customize->add_setting(
+		'kumiai_footer_logo',
+		array(
+			'default'           => '',
+			'sanitize_callback' => 'absint',
+		)
+	);
+	$wp_customize->add_control(
+		new WP_Customize_Media_Control(
+			$wp_customize,
+			'kumiai_footer_logo',
+			array(
+				'label'       => 'Logo cho Footer (nền tối)',
+				'description' => 'Tùy chọn: phiên bản logo đã được làm sáng/trắng cho nền tối ở footer. Bỏ trống nếu muốn dùng logo chính + tự động tint trắng.',
+				'section'     => 'title_tagline',
+				'mime_type'   => 'image',
+			)
+		)
+	);
 }
 add_action( 'customize_register', 'kumiai_customize_register' );
 

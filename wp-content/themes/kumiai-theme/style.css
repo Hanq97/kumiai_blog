@@ -73,7 +73,13 @@ ul { list-style: none; padding: 0; margin: 0; }
   width: auto;
   display: block;
   margin-bottom: 15px;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(1); /* fallback: tint header logo white when no dedicated footer logo */
+}
+.footer-brand .footer-logo-image {
+  height: 44px;
+  width: auto;
+  display: block;
+  margin-bottom: 15px;
 }
 .header-menu-list {
   display: flex;
