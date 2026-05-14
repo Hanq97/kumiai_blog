@@ -31,8 +31,11 @@
 					<!-- Main Content Left -->
 					<div class="single-content-wrapper">
 						<div class="single-header-image">
-							<!-- Ảnh nền ngẫu nhiên giống thẻ bên ngoài -->
-							<img src="https://picsum.photos/seed/<?php echo (int) get_the_ID(); ?>/800/450" alt="<?php the_title_attribute(); ?>">
+							<?php if ( has_post_thumbnail() ) : ?>
+								<?php the_post_thumbnail( 'large' ); ?>
+							<?php else : ?>
+								<img src="https://picsum.photos/seed/<?php echo (int) get_the_ID(); ?>/800/450" alt="<?php the_title_attribute(); ?>">
+							<?php endif; ?>
 						</div>
 						
 						<div class="single-text">
@@ -130,7 +133,11 @@
 					<article class="blog-card" style="margin-bottom:0;">
 						<div class="card-image">
 							<a href="<?php the_permalink(); ?>">
-								<img src="https://picsum.photos/seed/<?php echo (int) get_the_ID(); ?>/600/400" alt="<?php the_title_attribute(); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+								<?php if ( has_post_thumbnail() ) : ?>
+									<?php the_post_thumbnail( 'medium_large', array( 'style' => 'width: 100%; height: 100%; object-fit: cover;' ) ); ?>
+								<?php else : ?>
+									<img src="https://picsum.photos/seed/<?php echo (int) get_the_ID(); ?>/600/400" alt="<?php the_title_attribute(); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+								<?php endif; ?>
 							</a>
 						</div>
 						<div class="card-content">
