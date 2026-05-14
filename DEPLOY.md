@@ -142,48 +142,61 @@ Bây giờ vào `https://blog.kumiai.jp/wp-admin/install.php` để hoàn thành
 
 ## 3. Backup DB tự động (bắt buộc)
 
-Không có backup = 1 migration sai / ổ cứng chết = blog bay hết. Thêm service backup.
+Service `backup` đã được khai báo sẵn trong `docker-compose.yml` (image `databack/mysql-backup`), nhưng đặt trong **profile `prod`** nên không chạy mặc định. Để bật trên VPS:
 
-### 3a. Thêm service `backup` vào `docker-compose.yml`
+### 3a. Thêm `COMPOSE_PROFILES=prod` vào `.env`
 
-```yaml
-  backup:
-    image: databack/mysql-backup:latest
-    container_name: kumiai_backup
-    restart: always
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_SERVER: db
-      DB_USER: root
-      DB_PASS: ${DB_ROOT_PASSWORD}
-      DB_NAMES: ${DB_NAME:-wordpress}
-      DB_DUMP_CRON: "0 3 * * *"          # 3 giờ sáng mỗi ngày
-      DB_DUMP_TARGET: /backups
-      RETENTION: "7d"                     # giữ 7 ngày
-      COMPRESSION: gzip
-    volumes:
-      - ./backups:/backups
+```ini
+COMPOSE_PROFILES=prod
 ```
 
+### 3b. Restart stack
+
 ```bash
-mkdir -p backups
-echo "backups/" >> .gitignore
 docker compose up -d
+docker compose ps   # phải thấy thêm container kumiai_backup
 ```
 
-### 3b. Copy ra ngoài (khuyến nghị)
+Service sẽ tự dump DB lúc **03:00 UTC mỗi ngày** vào `./backups/`, giữ **7 ngày**, gzip-compressed.
 
-Backup nằm cùng server thì server chết = mất luôn. Sync sang S3/Backblaze hàng đêm:
+### 3c. Copy ra ngoài (khuyến nghị)
+
+Backup nằm cùng server thì server chết = mất luôn. Đẩy sang Google Drive / Backblaze / S3 hàng đêm bằng `rclone`. Repo có sẵn script `scripts/offsite-backup-to-gdrive.sh` xử lý chuyện này.
+
+**Setup 1 lần trên VPS:**
 
 ```bash
-# Trên host, đặt tại /etc/cron.daily/kumiai-backup-offsite
-#!/bin/bash
-aws s3 sync /path/đến/kumiai-wp/backups s3://my-backups/kumiai/ --delete
+# 1. Cài rclone
+curl https://rclone.org/install.sh | sudo bash
+
+# 2. Cấu hình remote (interactive — mở OAuth URL trong browser)
+rclone config
+#   n) New remote
+#   name: gdrive
+#   Storage: drive (Google Drive)
+#   client_id / client_secret: bỏ trống (dùng default)
+#   scope: 1 (full access)
+#   → login Google → paste auth code
+
+# 3. Test
+rclone lsf gdrive:
 ```
 
-### 3c. Test restore (làm ngay lần đầu)
+**Schedule daily — crontab root:**
+
+```cron
+# Backup container dump tại 03:00 UTC → script push lên Drive lúc 04:30 UTC
+30 4 * * * /opt/kumiai-wp/scripts/offsite-backup-to-gdrive.sh >> /var/log/kumiai-offsite.log 2>&1
+```
+
+Script sẽ:
+- Upload các file `.sql.gz` mới trong `./backups/` lên `gdrive:kumiai-backups/`
+- Xoá file trên Drive > 30 ngày (giữ history lâu hơn local 7 ngày để có thêm an toàn)
+- Log mỗi lần chạy vào `/var/log/kumiai-offsite.log` để debug
+
+**Dùng provider khác:** chạy `rclone config` lần đầu với storage backend khác (`b2` cho Backblaze, `s3` cho AWS/R2/Wasabi, `dropbox`, `onedrive`...) và set `RCLONE_REMOTE=tên_remote` trong env trước khi chạy script. Logic script không đổi.
+
+### 3d. Test restore (làm ngay lần đầu)
 
 ```bash
 # Chạy backup thủ công 1 lần

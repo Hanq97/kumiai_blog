@@ -124,6 +124,35 @@ Common one-liners:
 
 > **PowerShell quirk:** quote any flag whose value contains commas — `wp.ps1 user list "--fields=ID,user_login"`. Bash users don't need quotes.
 
+## Continuous Deployment (CD)
+
+`.github/workflows/deploy.yml` runs on every push to `main`. It SSHes into the production VPS, pulls the latest code, and reconciles containers (`docker compose up -d`).
+
+The workflow is dormant until you configure the secrets — merging it before having a VPS is safe. To enable auto-deploy:
+
+1. **GitHub → Settings → Secrets and variables → Actions → New repository secret** — add four secrets:
+
+   | Name | Value |
+   |---|---|
+   | `DEPLOY_HOST` | VPS IP or hostname (e.g. `203.0.113.42` or `blog.kumiai.jp`) |
+   | `DEPLOY_USER` | SSH user (`ubuntu`, or `root` for Vultr defaults) |
+   | `DEPLOY_SSH_KEY` | The **private** SSH key whose public counterpart is in the server's `~/.ssh/authorized_keys` |
+   | `DEPLOY_PATH` | Absolute path to the repo clone on the server (e.g. `/opt/kumiai-wp`) |
+
+2. **(Recommended) Require manual approval** — Settings → Environments → New environment named `production` → enable "Required reviewers". GitHub will then ask you to approve each deploy in the Actions tab before it SSHes in.
+
+3. Trigger a deploy: merge any PR (or click "Run workflow" in the Actions tab). The workflow's logs show every step.
+
+Each deploy on the server runs:
+```bash
+git fetch origin main
+git reset --hard origin/main
+docker compose pull
+docker compose up -d --remove-orphans
+```
+
+Theme code changes (bind-mounted) take effect on the next request — no container restart needed. Compose only recreates containers whose config actually changed.
+
 ## Code Quality (CI)
 
 Every push and PR runs the workflow at [.github/workflows/ci.yml](.github/workflows/ci.yml):

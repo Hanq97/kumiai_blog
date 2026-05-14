@@ -19,3 +19,7 @@ Thumbs.db
 
 # Claude Code agent settings (personal, not shared)
 /.claude/
+
+# DB backups produced by the `backup` service — content, not code
+/backups/*
+!/backups/.gitkeep

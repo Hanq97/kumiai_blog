@@ -77,6 +77,30 @@ services:
       - ./wp-content/uploads:/var/www/html/wp-content/uploads
       - wp_plugins:/var/www/html/wp-content/plugins
 
+  # Nightly mysqldump → ./backups (host bind-mount, gitignored).
+  # Activated by COMPOSE_PROFILES=prod in .env (or `docker compose --profile prod up -d`).
+  # Schedule: 03:00 UTC daily, retain 7 days, gzip-compressed.
+  # Restore: see DEPLOY.md §6.
+  backup:
+    image: databack/mysql-backup:1.0.0
+    container_name: kumiai_backup
+    restart: always
+    profiles: ["prod"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_SERVER: db
+      DB_USER: root
+      DB_PASS: ${DB_ROOT_PASSWORD:-root_password}
+      DB_NAMES: ${DB_NAME:-wordpress}
+      DB_DUMP_CRON: "0 3 * * *"
+      DB_DUMP_TARGET: /backups
+      RETENTION: "7d"
+      COMPRESSION: gzip
+    volumes:
+      - ./backups:/backups
+
 volumes:
   db_data:
   wp_plugins:

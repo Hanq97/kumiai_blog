@@ -51,9 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate docker-compose.yml
+      - name: Validate docker-compose.yml (default profile)
         run: docker compose config --quiet
-        env:
+        env: &compose_env
           # Dummy values so the substitutions don't fail; production uses real .env.
           DB_ROOT_PASSWORD: ci
           DB_PASSWORD: ci
@@ -65,3 +65,7 @@ jobs:
           WP_PORT: '8000'
           KUMIAI_ENV: development
           KUMIAI_DYNAMIC_URL: '0'
+
+      - name: Validate docker-compose.yml (prod profile — backup service)
+        run: docker compose --profile prod config --quiet
+        env: *compose_env

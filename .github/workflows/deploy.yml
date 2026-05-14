@@ -1,0 +1,65 @@
+name: Deploy to production
+
+# Triggers on every push to main (typically a merged PR) plus manual run from the Actions tab.
+# Skips silently if the deploy secrets aren't configured yet — so the workflow can ship merged
+# into main before the VPS exists, and start working once secrets are added.
+#
+# Required GitHub secrets (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST       - VPS IP or hostname, e.g. 203.0.113.42 or blog.kumiai.jp
+#   DEPLOY_USER       - SSH user, e.g. ubuntu (or root for Vultr defaults)
+#   DEPLOY_SSH_KEY    - PRIVATE SSH key (the matching public key is on the server)
+#   DEPLOY_PATH       - Absolute path to the repo clone on the server, e.g. /opt/kumiai-wp
+#
+# Optional:
+#   - "production" GitHub Environment with required reviewers if you want a human approval
+#     gate before each deploy. Settings → Environments → New environment → enable
+#     "Required reviewers".
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false   # never cancel an in-flight deploy
+
+jobs:
+  deploy:
+    name: SSH deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check required secrets
+        id: gate
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "::warning::DEPLOY_HOST not set — deploy skipped. Configure secrets in repo settings to enable auto-deploy."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy via SSH
+        if: steps.gate.outputs.skip == 'false'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host:     ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key:      ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            echo "→ Fetching latest main"
+            git fetch origin main
+            git reset --hard origin/main
+            echo "→ Reconciling containers (pull + up -d)"
+            docker compose pull
+            docker compose up -d --remove-orphans
+            echo "→ Done. Current commit: $(git rev-parse --short HEAD)"
