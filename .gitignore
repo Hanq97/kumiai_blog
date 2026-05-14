@@ -16,3 +16,6 @@ Thumbs.db
 
 # Composer (dev stubs only — not loaded at runtime)
 /vendor/
+
+# Claude Code agent settings (personal, not shared)
+/.claude/

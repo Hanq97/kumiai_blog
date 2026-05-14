@@ -19,8 +19,12 @@
 				<article class="blog-card">
 					<div class="card-image">
 						<a href="<?php the_permalink(); ?>">
-							<!-- Sử dụng Picsum API với Seed là ID bài viết để có ảnh random nhưng luôn cố định cho từng bài -->
-							<img src="https://picsum.photos/seed/<?php echo (int) get_the_ID(); ?>/600/400" alt="<?php the_title_attribute(); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+							<?php if ( has_post_thumbnail() ) : ?>
+								<?php the_post_thumbnail( 'medium_large', array( 'style' => 'width: 100%; height: 100%; object-fit: cover;' ) ); ?>
+							<?php else : ?>
+								<!-- Fallback: Picsum seeded by post ID — stable per post until a real featured image is uploaded. -->
+								<img src="https://picsum.photos/seed/<?php echo (int) get_the_ID(); ?>/600/400" alt="<?php the_title_attribute(); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+							<?php endif; ?>
 						</a>
 					</div>
 					<div class="card-content">
