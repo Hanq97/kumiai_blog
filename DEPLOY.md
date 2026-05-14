@@ -159,7 +159,7 @@ docker compose ps   # phải thấy thêm container kumiai_backup
 
 Service sẽ tự dump DB lúc **03:00 UTC mỗi ngày** vào `./backups/`, giữ **7 ngày**, gzip-compressed.
 
-### 3b. Copy ra ngoài (khuyến nghị)
+### 3c. Copy ra ngoài (khuyến nghị)
 
 Backup nằm cùng server thì server chết = mất luôn. Sync sang S3/Backblaze hàng đêm:
 
@@ -169,7 +169,7 @@ Backup nằm cùng server thì server chết = mất luôn. Sync sang S3/Backbla
 aws s3 sync /path/đến/kumiai-wp/backups s3://my-backups/kumiai/ --delete
 ```
 
-### 3c. Test restore (làm ngay lần đầu)
+### 3d. Test restore (làm ngay lần đầu)
 
 ```bash
 # Chạy backup thủ công 1 lần
