@@ -59,7 +59,9 @@ jobs:
           DB_PASSWORD: ci
           DB_USER: ci
           DB_NAME: ci
+          DB_PORT: '3306'
           WP_HOME: http://localhost:8000
           WP_SITEURL: http://localhost:8000
           WP_PORT: '8000'
           KUMIAI_ENV: development
+          KUMIAI_DYNAMIC_URL: '0'

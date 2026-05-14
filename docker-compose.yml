@@ -1,8 +1,18 @@
 services:
   db:
     image: mysql:8.0
+    # Default to mysql_native_password so loopback-connecting GUIs (TablePlus / DBeaver / ...) don't
+    # hit the caching_sha2_password "requires secure connection" wall on a plain TCP connection.
+    # MySQL 8 still ships caching_sha2 by default, but for a loopback-only dev/local DB the older
+    # plugin is the pragmatic choice. Change to caching_sha2_password + proper TLS for production.
+    command: --default-authentication-plugin=mysql_native_password
     container_name: kumiai_db
     restart: always
+    ports:
+      # Loopback-only — host-side DB GUIs (DBeaver, TablePlus, ...) can connect at 127.0.0.1:DB_PORT.
+      # Not reachable from LAN/Internet. On production set DB_PORT to a value you don't expose or
+      # remove this line entirely.
+      - "127.0.0.1:${DB_PORT:-3306}:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
       MYSQL_DATABASE: ${DB_NAME:-wordpress}
@@ -32,8 +42,24 @@ services:
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wp_password}
       WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
       WORDPRESS_CONFIG_EXTRA: |
-        define('WP_HOME', '${WP_HOME:-http://localhost:8000}');
-        define('WP_SITEURL', '${WP_SITEURL:-http://localhost:8000}');
+        if ('${KUMIAI_DYNAMIC_URL:-0}' === '1') {
+            if (!empty($$_SERVER['HTTP_X_FORWARDED_PROTO']) && $$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+                $$_SERVER['HTTPS'] = 'on';
+            }
+            // Prefer X-Forwarded-Host because tunnels (VSCode devtunnels, ngrok, Caddy, ...) usually
+            // rewrite the request Host to the upstream target (e.g. localhost:8000) and put the real
+            // public hostname in X-Forwarded-Host. Fall back to Host for direct access.
+            $$kumiai_host = $$_SERVER['HTTP_X_FORWARDED_HOST'] ?? $$_SERVER['HTTP_HOST'] ?? '';
+            if (!empty($$kumiai_host)) {
+                $$kumiai_scheme = (!empty($$_SERVER['HTTPS']) && $$_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                define('WP_HOME', $$kumiai_scheme . '://' . $$kumiai_host);
+                define('WP_SITEURL', $$kumiai_scheme . '://' . $$kumiai_host);
+            }
+        }
+        if (!defined('WP_HOME')) {
+            define('WP_HOME', '${WP_HOME:-http://localhost:8000}');
+            define('WP_SITEURL', '${WP_SITEURL:-http://localhost:8000}');
+        }
         define('KUMIAI_ENV', '${KUMIAI_ENV:-development}');
         define('DISALLOW_FILE_EDIT', true);
         define('AUTOMATIC_UPDATER_DISABLED', true);

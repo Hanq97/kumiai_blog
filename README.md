@@ -78,6 +78,20 @@ The container ships with the following WP constants baked in via `WORDPRESS_CONF
 
 XML-RPC is disabled at the application level (the `xmlrpc_enabled` filter returns false and the `X-Pingback` header is removed) — this closes the most common WP brute-force vector.
 
+## Connecting a Database GUI
+
+MySQL is bound to `127.0.0.1:${DB_PORT:-3306}` on the host so desktop tools (DBeaver, TablePlus, HeidiSQL, MySQL Workbench, ...) can connect without exposing the DB to the LAN.
+
+| Field | Value (defaults) |
+|---|---|
+| Host | `127.0.0.1` |
+| Port | `3306` (override via `DB_PORT` in `.env`) |
+| User | `wp_user` (or `root` for admin tasks) |
+| Password | `wp_password` (or `DB_ROOT_PASSWORD` for root) |
+| Database | `wordpress` |
+
+If port 3306 is already taken on your host (another MySQL/MariaDB running locally), bump `DB_PORT=3307` in `.env` and `docker compose up -d`.
+
 ## WP-CLI
 
 Two wrapper scripts in the repo root expose [WP-CLI](https://wp-cli.org/) against the running `kumiai_wp` container — no installation needed beyond Docker.
