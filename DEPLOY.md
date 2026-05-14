@@ -142,36 +142,22 @@ Bây giờ vào `https://blog.kumiai.jp/wp-admin/install.php` để hoàn thành
 
 ## 3. Backup DB tự động (bắt buộc)
 
-Không có backup = 1 migration sai / ổ cứng chết = blog bay hết. Thêm service backup.
+Service `backup` đã được khai báo sẵn trong `docker-compose.yml` (image `databack/mysql-backup`), nhưng đặt trong **profile `prod`** nên không chạy mặc định. Để bật trên VPS:
 
-### 3a. Thêm service `backup` vào `docker-compose.yml`
+### 3a. Thêm `COMPOSE_PROFILES=prod` vào `.env`
 
-```yaml
-  backup:
-    image: databack/mysql-backup:latest
-    container_name: kumiai_backup
-    restart: always
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_SERVER: db
-      DB_USER: root
-      DB_PASS: ${DB_ROOT_PASSWORD}
-      DB_NAMES: ${DB_NAME:-wordpress}
-      DB_DUMP_CRON: "0 3 * * *"          # 3 giờ sáng mỗi ngày
-      DB_DUMP_TARGET: /backups
-      RETENTION: "7d"                     # giữ 7 ngày
-      COMPRESSION: gzip
-    volumes:
-      - ./backups:/backups
+```ini
+COMPOSE_PROFILES=prod
 ```
+
+### 3b. Restart stack
 
 ```bash
-mkdir -p backups
-echo "backups/" >> .gitignore
 docker compose up -d
+docker compose ps   # phải thấy thêm container kumiai_backup
 ```
+
+Service sẽ tự dump DB lúc **03:00 UTC mỗi ngày** vào `./backups/`, giữ **7 ngày**, gzip-compressed.
 
 ### 3b. Copy ra ngoài (khuyến nghị)
 
